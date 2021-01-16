@@ -72,7 +72,7 @@ func getConfig(credentialsPath string) (*oauth2.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	return google.ConfigFromJSON(b, drive.DriveMetadataReadonlyScope, drive.DriveReadonlyScope)
+	return google.ConfigFromJSON(b, drive.DriveMetadataReadonlyScope, drive.DriveReadonlyScope, sheets.SpreadsheetsScope)
 }
 
 func saveToken(path string, token *oauth2.Token) error {
