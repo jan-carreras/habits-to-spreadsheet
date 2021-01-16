@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/sheets/v4"
+	"io"
 	"io/ioutil"
 	"os"
 
@@ -20,10 +22,11 @@ func NewReadWriter() *ReadWriter {
 }
 
 func (i *ReadWriter) Read(p []byte) (n int, err error) {
-	if n, err := fmt.Fscan(os.Stdin, &p); err != nil {
+	buf := make([]byte, 0)
+	if n, err = fmt.Fscan(os.Stdin, &buf); err != nil {
 		return n, fmt.Errorf("unable to read authorization code %v", err)
 	}
-	return
+	return copy(p, buf), io.EOF
 }
 
 func (i *ReadWriter) Write(url []byte) (n int, err error) {

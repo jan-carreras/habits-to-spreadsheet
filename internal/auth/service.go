@@ -3,6 +3,7 @@ package auth
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 )
 
 type AuthRepo interface {
@@ -32,8 +33,8 @@ func (s *Service) Handle() error {
 		return err
 	}
 
-	var authCode []byte
-	if _, err := s.rw.Read(authCode); err != nil {
+	authCode, err := ioutil.ReadAll(s.rw)
+	if err != nil {
 		return fmt.Errorf("unable to read authorization code %v", err)
 	}
 
