@@ -1,8 +1,10 @@
 package drive
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"time"
 )
 
 type driveRepository interface {
@@ -37,9 +39,15 @@ func NewService(r driveRepository, dbFile *dbFile, storageMaker storageMaker, ou
 
 type CMD struct {
 	Prefix string
+	From   time.Time
+	To     time.Time
 }
 
 func (s *Service) Handle(cmd CMD) error {
+	if cmd.From.IsZero() || cmd.To.IsZero() {
+		return errors.New("from/to dates cannot be empty")
+	}
+
 	res, err := s.repository.ListByPrefix(cmd.Prefix)
 	if err != nil {
 		return err
