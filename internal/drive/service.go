@@ -57,7 +57,9 @@ func (s *Service) Handle(cmd CMD) error {
 		return fmt.Errorf("no backup found with prefix '%v'", cmd.Prefix)
 	}
 
-	fmt.Fprintf(s.output, "Found %d backup files\n", len(res))
+	if _, err = fmt.Fprintf(s.output, "Found %d backup files\n", len(res)); err != nil {
+		return err
+	}
 
 	storage, err := s.openOrDownload(res[0])
 	if err != nil {
@@ -82,11 +84,15 @@ func (s *Service) Handle(cmd CMD) error {
 
 func (s *Service) openOrDownload(res listResult) (*storage, error) {
 	if s.dbFile.Exists(res.name) {
-		fmt.Fprintf(s.output, "File already downloaded: '%v'\n", res.name)
+		if _, err := fmt.Fprintf(s.output, "File already downloaded: '%v'\n", res.name); err != nil {
+			return nil, err
+		}
 		return s.storageMaker.Make(res.name)
 	}
 
-	fmt.Fprintf(s.output, "Downloading newest: '%v'\n", res.name)
+	if _, err := fmt.Fprintf(s.output, "Downloading newest: '%v'\n", res.name); err != nil {
+		return nil, err
+	}
 	db, err := s.repository.Download(res.id)
 	if err != nil {
 		return nil, err

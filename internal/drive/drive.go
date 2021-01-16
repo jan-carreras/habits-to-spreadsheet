@@ -54,7 +54,7 @@ type listResult struct {
 
 func (r *repository) ListByPrefix(contains string) ([]listResult, error) {
 	if strings.Contains(contains, "'") {
-		return nil, errors.New("Prefix contains unsupported single quote character")
+		return nil, errors.New("prefix contains unsupported single quote character")
 	}
 
 	rsp, err := r.client.Files.List().
@@ -83,7 +83,7 @@ func (r *repository) Download(id string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	return ioutil.ReadAll(rsp.Body)
 }
 
@@ -93,7 +93,7 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	tok := &oauth2.Token{}
 	err = json.NewDecoder(f).Decode(tok)
 	return tok, err

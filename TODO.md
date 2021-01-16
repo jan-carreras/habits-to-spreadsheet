@@ -6,4 +6,5 @@
 * [x] Do the query and retrieve all the records
 * [ ] Integrate with sheets
     * [ ] Be able to fetch/store records on a sheet
+* [x] Fix IDE "Problems" in code
     

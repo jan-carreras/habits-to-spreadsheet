@@ -92,11 +92,11 @@ func parseDate(d string) time.Time {
 }
 
 func makeDate(month time.Month, day int, end bool) time.Time {
-	hour, min, sec, nsec := 0, 0, 0, 0
+	hour, min, sec, nano := 0, 0, 0, 0
 	if end {
-		hour, min, sec, nsec = 23, 59, 59, 999999999
+		hour, min, sec, nano = 23, 59, 59, 999999999
 	}
-	return time.Date(now.Year(), month, day, hour, min, sec, nsec, time.UTC)
+	return time.Date(now.Year(), month, day, hour, min, sec, nano, time.UTC)
 }
 
 func authorize(arg args) {

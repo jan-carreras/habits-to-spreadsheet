@@ -54,7 +54,7 @@ func (d *storage) AllHabits(from, to time.Time) ([]stat, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer result.Close()
+	defer func() { _ = result.Close() }()
 
 	stats := make([]stat, 0)
 	for result.Next() {
