@@ -18,10 +18,7 @@ func NewDBFile(path string) *dbFile {
 
 func (d *dbFile) Exists(name string) bool {
 	_, err := os.Stat(path.Join(d.path, name))
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func (d *dbFile) Store(name string, db []byte) error {
