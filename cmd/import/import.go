@@ -125,17 +125,6 @@ func importData(arg args) {
 	failOnErr(err)
 }
 
-func main() {
-	arg := parseArgs()
-
-	if arg.authorize {
-		authorize(arg)
-		return
-	}
-
-	importData(arg)
-}
-
 func failOnErr(err error) {
 	if err != nil {
 		log.Fatal(err)
