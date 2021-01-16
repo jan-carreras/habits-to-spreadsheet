@@ -64,12 +64,12 @@ func (s *Service) Handle(cmd CMD) error {
 		return err
 	}
 
-	task, err := storage.Task("Anki")
+	habits, err := storage.AllHabits(cmd.From, cmd.To)
 	if err != nil {
 		return err
 	}
-	for _, t := range task {
-		fmt.Println(t)
+	for _, h := range habits {
+		fmt.Println(h)
 	}
 
 	// OpenDB and start importing info to GoogleSheets
