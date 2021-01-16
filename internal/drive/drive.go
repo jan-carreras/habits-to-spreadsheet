@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -29,7 +30,7 @@ func NewRepository(credentialsPaths, tokenPath string) (*repository, error) {
 	}
 	client := config.Client(context.Background(), tok)
 
-	srv, err := drive.New(client)
+	srv, err := drive.NewService(context.Background(), option.WithHTTPClient(client))
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve Drive client: %v", err)
 	}
