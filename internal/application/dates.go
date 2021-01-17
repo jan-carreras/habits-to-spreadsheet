@@ -24,7 +24,6 @@ type DatesCMD struct {
 	From    string
 	To      string
 	Quarter int
-	now     time.Time
 }
 
 type DatesOut struct {
@@ -33,31 +32,31 @@ type DatesOut struct {
 }
 
 func (s *DatesService) Handle(cmd DatesCMD) (DatesOut, error) {
-	cmd.now = time.Now()
-	return s.parseDates(cmd)
+	return s.parseDates(cmd.From, cmd.To, cmd.Quarter)
 }
 
-func (s *DatesService) parseDates(cmd DatesCMD) (dates DatesOut, err error) {
-	if (cmd.From != "" && cmd.To == "") || (cmd.From == "" && cmd.To != "") {
+func (s *DatesService) parseDates(from, to string, quarter int) (dates DatesOut, err error) {
+	if (from != "" && to == "") || (from == "" && to != "") {
 		err = errors.New("you must define both from and to")
 		return
 	}
 
-	dates.From, err = s.parseDate(cmd.From)
+	dates.From, err = s.parseDate(from)
 	if err != nil {
 		return
 	}
-	dates.To, err = s.parseDate(cmd.To)
+	dates.To, err = s.parseDate(to)
 	if err != nil {
 		return
 	}
 
-	qs := makeQuarters(cmd.now)
+	now := time.Now()
+	qs := makeQuarters(now)
 
-	if cmd.Quarter != 0 {
-		q := cmd.Quarter - 1 // 0 index access
+	if quarter != 0 {
+		q := quarter - 1 // 0 index access
 		if q < 0 && q > len(qs) {
-			err = fmt.Errorf("invalid quarter %v. valid quarters go from 1 to 4", cmd.Quarter)
+			err = fmt.Errorf("invalid quarter %v. valid quarters go from 1 to 4", quarter)
 			return
 		}
 		dates.From = qs[q].start
@@ -67,7 +66,7 @@ func (s *DatesService) parseDates(cmd DatesCMD) (dates DatesOut, err error) {
 	// No dates defined, set the current quarter
 	if dates.From.IsZero() || dates.To.IsZero() {
 		for _, qt := range qs {
-			if cmd.now.Sub(qt.start) >= 0 && cmd.now.Sub(qt.to) <= 0 {
+			if now.Sub(qt.start) >= 0 && now.Sub(qt.to) <= 0 {
 				dates.From, dates.To = qt.start, qt.to
 				break
 			}
