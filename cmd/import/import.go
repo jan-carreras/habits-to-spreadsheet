@@ -113,12 +113,12 @@ func importData(arg args) {
 	r, err := drive.NewRepository(arg.credentialsPath, arg.tokenPath)
 	failOnErr(err)
 
-	srv := application.NewService(r,
+	srv := application.NewSyncService(r,
 		drive.NewDBFile(arg.tmpPath),
 		drive.NewStorageFactory(arg.tmpPath),
 		os.Stdout)
 
-	err = srv.Handle(application.CMD{
+	err = srv.Handle(application.SyncCMD{
 		Prefix: arg.prefix,
 		From:   arg.from,
 		To:     arg.to,

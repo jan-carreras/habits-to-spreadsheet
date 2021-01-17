@@ -8,26 +8,16 @@ import (
 	"time"
 )
 
-type driveRepository interface {
-	ListByPrefix(contains string) ([]domain.ListResult, error)
-	Download(id string) ([]byte, error)
-}
-
-type fileRepository interface {
-	Exists(name string) bool
-	Store(name string, db []byte) error
-}
-
 type SyncService struct {
-	repository   driveRepository
-	dbFile       fileRepository
+	repository   domain.DriveRepository
+	dbFile       domain.FileRepository
 	storageMaker domain.StorageMaker
 	output       io.Writer
 }
 
-func NewService(
-	r driveRepository,
-	dbFile fileRepository,
+func NewSyncService(
+	r domain.DriveRepository,
+	dbFile domain.FileRepository,
 	storageMaker domain.StorageMaker,
 	out io.Writer,
 ) *SyncService {
@@ -39,13 +29,13 @@ func NewService(
 	}
 }
 
-type CMD struct {
+type SyncCMD struct {
 	Prefix string
 	From   time.Time
 	To     time.Time
 }
 
-func (s *SyncService) Handle(cmd CMD) error {
+func (s *SyncService) Handle(cmd SyncCMD) error {
 	if cmd.From.IsZero() || cmd.To.IsZero() {
 		return errors.New("from/to dates cannot be empty")
 	}
