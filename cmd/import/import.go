@@ -1,9 +1,7 @@
 package main
 
 import (
-	"errors"
 	"flag"
-	"fmt"
 	"habitsSync/internal/application"
 	"habitsSync/internal/infrastructure/auth"
 	"habitsSync/internal/infrastructure/drive"
@@ -11,19 +9,6 @@ import (
 	"os"
 	"time"
 )
-
-const dateLayout = "2006-01-02"
-
-var now = time.Now()
-var qs = []struct {
-	start time.Time
-	to    time.Time
-}{
-	{start: makeDate(1, 1, false), to: makeDate(3, 31, true)},
-	{start: makeDate(4, 1, false), to: makeDate(6, 30, true)},
-	{start: makeDate(7, 1, false), to: makeDate(9, 30, true)},
-	{start: makeDate(10, 1, false), to: makeDate(12, 31, true)},
-}
 
 type args struct {
 	credentialsPath string
@@ -38,32 +23,20 @@ type args struct {
 	to              time.Time
 }
 
-func parseDates(a *args) {
-	if (a.fromStr != "" && a.toStr == "") || (a.fromStr == "" && a.toStr != "") {
-		failOnErr(errors.New("you must define both from and to"))
+func parseDates(a *args) error {
+	s := application.NewDatesService()
+	cmd := application.DatesCMD{
+		From:    a.fromStr,
+		To:      a.toStr,
+		Quarter: a.quarter,
 	}
-
-	a.from = parseDate(a.fromStr)
-	a.to = parseDate(a.toStr)
-
-	if a.quarter != 0 {
-		q := a.quarter - 1 // 0 index access
-		if q < 0 && q > len(qs) {
-			failOnErr(fmt.Errorf("invalid quarter %v. valid quarters go from 1 to 4", a.quarter))
-		}
-		a.from = qs[q].start
-		a.to = qs[q].to
+	d, err := s.Handle(cmd)
+	if err != nil {
+		return err
 	}
-
-	// No dates defined, set the current quarter
-	if a.from.IsZero() || a.to.IsZero() {
-		for _, qt := range qs {
-			if now.Sub(qt.start) >= 0 && now.Sub(qt.to) <= 0 {
-				a.from, a.to = qt.start, qt.to
-				break
-			}
-		}
-	}
+	a.from = d.From
+	a.to = d.To
+	return nil
 }
 
 func parseArgs() (a args) {
@@ -77,27 +50,9 @@ func parseArgs() (a args) {
 	flag.IntVar(&a.quarter, "quarter", 0, "date range for the quarter of the current year")
 	flag.Parse()
 
-	parseDates(&a)
+	failOnErr(parseDates(&a))
 
 	return a
-}
-
-func parseDate(d string) time.Time {
-	if d == "" {
-		return time.Time{}
-	}
-
-	t, err := time.Parse(dateLayout, d)
-	failOnErr(err)
-	return t
-}
-
-func makeDate(month time.Month, day int, end bool) time.Time {
-	hour, min, sec, nano := 0, 0, 0, 0
-	if end {
-		hour, min, sec, nano = 23, 59, 59, 999999999
-	}
-	return time.Date(now.Year(), month, day, hour, min, sec, nano, time.UTC)
 }
 
 func authorize(arg args) {

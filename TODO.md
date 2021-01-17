@@ -9,4 +9,5 @@
     * [ ] Be able to fetch/store records on a sheet
 * [x] Fix IDE "Problems" in code
 * [ ] Makefile with build, linter, gofmt checker, test
+* [x] Move the date parsing into an Application Service
     
