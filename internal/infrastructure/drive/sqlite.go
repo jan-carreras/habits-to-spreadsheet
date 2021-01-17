@@ -3,6 +3,7 @@ package drive
 import (
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
+	"habitsSync/internal/domain"
 	"path"
 	"time"
 )
@@ -25,41 +26,35 @@ func NewStorageFactory(path string) *storageFactory {
 	}
 }
 
-func (s *storageFactory) Make(name string) (*storage, error) {
+func (s *storageFactory) Make(name string) (domain.Storage, error) {
 	return NewStorage(path.Join(s.path, name))
 }
 
-type storage struct {
+type Storage struct {
 	db *sql.DB
 }
 
-func NewStorage(path string) (*storage, error) {
+func NewStorage(path string) (*Storage, error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, err
 	}
-	return &storage{
+	return &Storage{
 		db: db,
 	}, nil
 }
 
-type stat struct {
-	ID    int
-	name  string
-	count int
-}
-
-func (d *storage) AllHabits(from, to time.Time) ([]stat, error) {
+func (d *Storage) AllHabits(from, to time.Time) ([]domain.Stat, error) {
 	result, err := d.db.Query(allHabitsQuery, from.Unix()*1000, to.Unix()*1000)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = result.Close() }()
 
-	stats := make([]stat, 0)
+	stats := make([]domain.Stat, 0)
 	for result.Next() {
-		s := stat{}
-		if err = result.Scan(&s.ID, &s.name, &s.count); err != nil {
+		s := domain.Stat{}
+		if err = result.Scan(&s.ID, &s.Name, &s.Count); err != nil {
 			return nil, err
 		}
 		stats = append(stats, s)

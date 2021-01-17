@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
+	"habitsSync/internal/domain"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -48,12 +49,7 @@ func getConfig(credentialsPath string) (*oauth2.Config, error) {
 	return google.ConfigFromJSON(b, drive.DriveMetadataReadonlyScope, drive.DriveReadonlyScope)
 }
 
-type listResult struct {
-	id   string
-	name string
-}
-
-func (r *repository) ListByPrefix(contains string) ([]listResult, error) {
+func (r *repository) ListByPrefix(contains string) ([]domain.ListResult, error) {
 	if strings.Contains(contains, "'") {
 		return nil, errors.New("prefix contains unsupported single quote character")
 	}
@@ -68,11 +64,11 @@ func (r *repository) ListByPrefix(contains string) ([]listResult, error) {
 		return nil, fmt.Errorf("unable to retrieve files: %v", err)
 	}
 
-	lr := make([]listResult, 0)
+	lr := make([]domain.ListResult, 0)
 	for _, r := range rsp.Files {
-		lr = append(lr, listResult{
-			id:   r.Id,
-			name: r.Name,
+		lr = append(lr, domain.ListResult{
+			ID:   r.Id,
+			Name: r.Name,
 		})
 	}
 

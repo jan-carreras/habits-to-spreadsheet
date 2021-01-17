@@ -6,17 +6,17 @@ import (
 	"io/ioutil"
 )
 
-type AuthRepo interface {
+type authRepo interface {
 	GenerateAuthURL() (string, error)
 	SaveAuthToken(string) error
 }
 
 type Service struct {
 	rw       io.ReadWriter
-	authRepo AuthRepo
+	authRepo authRepo
 }
 
-func NewService(rw io.ReadWriter, authRepo AuthRepo) *Service {
+func NewService(rw io.ReadWriter, authRepo authRepo) *Service {
 	return &Service{
 		rw:       rw,
 		authRepo: authRepo,

@@ -4,8 +4,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"habitsSync/internal/auth"
-	"habitsSync/internal/drive"
+	"habitsSync/internal/application"
+	"habitsSync/internal/infrastructure/auth"
+	"habitsSync/internal/infrastructure/drive"
 	"log"
 	"os"
 	"time"
@@ -112,12 +113,12 @@ func importData(arg args) {
 	r, err := drive.NewRepository(arg.credentialsPath, arg.tokenPath)
 	failOnErr(err)
 
-	srv := drive.NewService(r,
+	srv := application.NewService(r,
 		drive.NewDBFile(arg.tmpPath),
 		drive.NewStorageFactory(arg.tmpPath),
 		os.Stdout)
 
-	err = srv.Handle(drive.CMD{
+	err = srv.Handle(application.CMD{
 		Prefix: arg.prefix,
 		From:   arg.from,
 		To:     arg.to,
