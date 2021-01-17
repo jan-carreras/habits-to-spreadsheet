@@ -8,15 +8,9 @@ import (
 
 const dateLayout = "2006-01-02"
 
-var now = time.Now()
-var qs = []struct {
+type quarters struct {
 	start time.Time
 	to    time.Time
-}{
-	{start: makeDate(1, 1, false), to: makeDate(3, 31, true)},
-	{start: makeDate(4, 1, false), to: makeDate(6, 30, true)},
-	{start: makeDate(7, 1, false), to: makeDate(9, 30, true)},
-	{start: makeDate(10, 1, false), to: makeDate(12, 31, true)},
 }
 
 type DatesService struct {
@@ -30,6 +24,7 @@ type DatesCMD struct {
 	From    string
 	To      string
 	Quarter int
+	now     time.Time
 }
 
 type DatesOut struct {
@@ -38,31 +33,26 @@ type DatesOut struct {
 }
 
 func (s *DatesService) Handle(cmd DatesCMD) (DatesOut, error) {
-	return parseDates(cmd)
+	cmd.now = time.Now()
+	return s.parseDates(cmd)
 }
 
-func makeDate(month time.Month, day int, end bool) time.Time {
-	hour, min, sec, nano := 0, 0, 0, 0
-	if end {
-		hour, min, sec, nano = 23, 59, 59, 999999999
-	}
-	return time.Date(now.Year(), month, day, hour, min, sec, nano, time.UTC)
-}
-
-func parseDates(cmd DatesCMD) (dates DatesOut, err error) {
+func (s *DatesService) parseDates(cmd DatesCMD) (dates DatesOut, err error) {
 	if (cmd.From != "" && cmd.To == "") || (cmd.From == "" && cmd.To != "") {
 		err = errors.New("you must define both from and to")
 		return
 	}
 
-	dates.From, err = parseDate(cmd.From)
+	dates.From, err = s.parseDate(cmd.From)
 	if err != nil {
 		return
 	}
-	dates.To, err = parseDate(cmd.To)
+	dates.To, err = s.parseDate(cmd.To)
 	if err != nil {
 		return
 	}
+
+	qs := makeQuarters(cmd.now)
 
 	if cmd.Quarter != 0 {
 		q := cmd.Quarter - 1 // 0 index access
@@ -77,7 +67,7 @@ func parseDates(cmd DatesCMD) (dates DatesOut, err error) {
 	// No dates defined, set the current quarter
 	if dates.From.IsZero() || dates.To.IsZero() {
 		for _, qt := range qs {
-			if now.Sub(qt.start) >= 0 && now.Sub(qt.to) <= 0 {
+			if cmd.now.Sub(qt.start) >= 0 && cmd.now.Sub(qt.to) <= 0 {
 				dates.From, dates.To = qt.start, qt.to
 				break
 			}
@@ -86,7 +76,27 @@ func parseDates(cmd DatesCMD) (dates DatesOut, err error) {
 	return
 }
 
-func parseDate(d string) (time.Time, error) {
+func makeQuarters(now time.Time) []quarters {
+	makeDate := dateMaker(now)
+	return []quarters{
+		{start: makeDate(1, 1, false), to: makeDate(3, 31, true)},
+		{start: makeDate(4, 1, false), to: makeDate(6, 30, true)},
+		{start: makeDate(7, 1, false), to: makeDate(9, 30, true)},
+		{start: makeDate(10, 1, false), to: makeDate(12, 31, true)},
+	}
+}
+
+func dateMaker(now time.Time) func(month time.Month, day int, end bool) time.Time {
+	return func(month time.Month, day int, end bool) time.Time {
+		hour, min, sec, nano := 0, 0, 0, 0
+		if end {
+			hour, min, sec, nano = 23, 59, 59, 999999999
+		}
+		return time.Date(now.Year(), month, day, hour, min, sec, nano, time.UTC)
+	}
+}
+
+func (s *DatesService) parseDate(d string) (time.Time, error) {
 	if d == "" {
 		return time.Time{}, nil
 	}
