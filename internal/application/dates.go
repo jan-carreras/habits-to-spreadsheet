@@ -35,9 +35,15 @@ func (s *DatesService) Handle(cmd DatesCMD) (DatesOut, error) {
 	return s.parseDates(cmd.From, cmd.To, cmd.Quarter)
 }
 
+/** TODO Things to change about this code
+- Methods are too long — should be defined in smaller functions
+- Time management should be injected for testability purposes
+- Some functions are verbose and repeat themselves (date creation). Could be more simple
+- Adding unit tests, of course
+*/
+
 func (s *DatesService) parseDates(from, to string, quarter int) (dates DatesOut, err error) {
-	if (from != "" && to == "") || (from == "" && to != "") {
-		err = errors.New("you must define both from and to")
+	if err = noDatesOrBothDatesRequired(from, to); err != nil {
 		return
 	}
 
@@ -50,7 +56,7 @@ func (s *DatesService) parseDates(from, to string, quarter int) (dates DatesOut,
 		return
 	}
 
-	now := time.Now()
+	now := time.Now() // TODO: That's untestable. Should come from a repository
 	qs := makeQuarters(now)
 
 	if quarter != 0 {
@@ -73,6 +79,13 @@ func (s *DatesService) parseDates(from, to string, quarter int) (dates DatesOut,
 		}
 	}
 	return
+}
+
+func noDatesOrBothDatesRequired(from, to string) error {
+	if (from != "" && to == "") || (from == "" && to != "") {
+		return errors.New("you must define both from and to")
+	}
+	return nil
 }
 
 func makeQuarters(now time.Time) []quarters {
