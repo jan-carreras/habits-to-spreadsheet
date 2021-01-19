@@ -4,15 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"habitsSync/internal/domain"
+	"io/ioutil"
+	"log"
+	"os"
+
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
-	"habitsSync/internal/domain"
-	"io/ioutil"
-	"log"
-	"os"
 )
 
 type repository struct {

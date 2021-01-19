@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/option"
 	"habitsSync/internal/domain"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"

@@ -2,10 +2,11 @@ package drive
 
 import (
 	"database/sql"
-	_ "github.com/mattn/go-sqlite3"
 	"habitsSync/internal/domain"
 	"path"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const allHabitsQuery = `select Habits.Id, Habits.name, count(Repetitions.id)
