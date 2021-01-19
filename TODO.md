@@ -9,9 +9,9 @@
     * [x] Be able to store records on a sheet
 * [x] Fix IDE "Problems" in code
 * [x] Move the date parsing into an Application Service
-* [ ] Make Makefile
-    * [ ] Build
-    * [ ] Linter & gofmt checker
+* [x] Make Makefile
+    * [x] Build
+    * [x] Linter & gofmt checker
 * [x] Pass the document ID or name as parameter in CLI
 * [ ] Create unit and integration tests
 * [ ] Make README
