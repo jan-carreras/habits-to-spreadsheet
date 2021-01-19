@@ -5,6 +5,7 @@ import (
 	"habitsSync/internal/application"
 	"habitsSync/internal/infrastructure/auth"
 	"habitsSync/internal/infrastructure/drive"
+	"habitsSync/internal/infrastructure/sheets"
 	"log"
 	"os"
 	"time"
@@ -19,6 +20,8 @@ type args struct {
 	fromStr         string
 	toStr           string
 	quarter         int
+	sheetName       string
+	spreadsheet     string
 	from            time.Time
 	to              time.Time
 }
@@ -46,6 +49,8 @@ func parseArgs() (a args) {
 	flag.StringVar(&a.tmpPath, "tmp", "/tmp", "temporary directory where to store the DB")
 	flag.StringVar(&a.fromStr, "from", "", "yyyy-mm-dd date from where start importing Habits records")
 	flag.StringVar(&a.toStr, "to", "", "yyy-mm-dd date from where stop importing Habits records")
+	flag.StringVar(&a.spreadsheet, "spreadsheet", "", "name of the spreadsheet to import")
+	flag.StringVar(&a.sheetName, "sheet-name", "Import", "the name of the Sheet where data is going to be imported")
 	flag.BoolVar(&a.authorize, "auth", false, "authorize")
 	flag.IntVar(&a.quarter, "quarter", 0, "date range for the quarter of the current year")
 	flag.Parse()

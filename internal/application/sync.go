@@ -9,7 +9,8 @@ import (
 )
 
 type SyncService struct {
-	repository   domain.DriveRepository
+	driveRepo    domain.DriveRepository
+	sheetsRepo   domain.SheetsRepository
 	dbFile       domain.FileRepository
 	storageMaker domain.StorageMaker
 	output       io.Writer
@@ -17,30 +18,34 @@ type SyncService struct {
 
 func NewSyncService(
 	r domain.DriveRepository,
-	dbFile domain.FileRepository,
-	storageMaker domain.StorageMaker,
+	s domain.SheetsRepository,
+	db domain.FileRepository,
+	sm domain.StorageMaker,
 	out io.Writer,
 ) *SyncService {
 	return &SyncService{
-		repository:   r,
-		dbFile:       dbFile,
-		storageMaker: storageMaker,
+		driveRepo:    r,
+		sheetsRepo:   s,
+		dbFile:       db,
+		storageMaker: sm,
 		output:       out,
 	}
 }
 
 type SyncCMD struct {
-	Prefix string
-	From   time.Time
-	To     time.Time
+	Prefix      string
+	From        time.Time
+	To          time.Time
+	Spreadsheet string
+	SheetName   string
 }
 
 func (s *SyncService) Handle(cmd SyncCMD) error {
-	if cmd.From.IsZero() || cmd.To.IsZero() {
-		return errors.New("from/to dates cannot be empty")
+	if err := validateInput(cmd); err != nil {
+		return err
 	}
 
-	res, err := s.repository.ListByPrefix(cmd.Prefix)
+	res, err := s.driveRepo.ListByPrefix(cmd.Prefix)
 	if err != nil {
 		return err
 	}
@@ -62,29 +67,57 @@ func (s *SyncService) Handle(cmd SyncCMD) error {
 	if err != nil {
 		return err
 	}
-	for _, h := range habits {
-		fmt.Println(h)
+
+	spreadsheetID, err := s.findSpreadsheet(cmd.Spreadsheet)
+	if err != nil {
+		return err
 	}
 
-	// TODO: OpenDB and start importing info to GoogleSheets
-	// TODO: Read from sqlite3 file and map certain habits in between dates. Count the events that have happened,
-	// 		 and update a google sheet with the result
+	if _, err = fmt.Fprintf(s.output, "Importing %v habits...\n", len(habits)); err != nil {
+		return err
+	}
+
+	if err := s.sheetsRepo.CreateSheet(spreadsheetID, cmd.SheetName); err != nil {
+		return err
+	}
+	if err := s.sheetsRepo.UpdateSheet(spreadsheetID, cmd.SheetName, habits); err != nil {
+		return err
+	}
+
+	if _, err = fmt.Fprint(s.output, "Habits imported successfully\n"); err != nil {
+		return err
+	}
 
 	return nil
 }
 
+func (s *SyncService) findSpreadsheet(spreadsheet string) (string, error) {
+	res, err := s.driveRepo.ListByPrefix(spreadsheet)
+	if err != nil {
+		return "", err
+	}
+	if len(res) == 0 {
+		return "", fmt.Errorf("spreadsheet not found under the name of '%v'", spreadsheet)
+	} else if len(res) > 1 {
+		// TODO: We're searching by prefix so we could check if there is an exact match instead of aborting
+		return "", fmt.Errorf("multiple spreadsheets found with same name: %v. Aborting", spreadsheet)
+	}
+
+	return res[0].ID, nil
+}
+
 func (s *SyncService) openOrDownload(res domain.ListResult) (domain.Storage, error) {
 	if s.dbFile.Exists(res.Name) {
-		if _, err := fmt.Fprintf(s.output, "File already downloaded: '%v'\n", res.Name); err != nil {
+		if _, err := fmt.Fprintf(s.output, "Newest backup file already downloaded: '%v'\n", res.Name); err != nil {
 			return nil, err
 		}
 		return s.storageMaker.Make(res.Name)
 	}
 
-	if _, err := fmt.Fprintf(s.output, "Downloading newest: '%v'\n", res.Name); err != nil {
+	if _, err := fmt.Fprintf(s.output, "Downloading newest backup: '%v'\n", res.Name); err != nil {
 		return nil, err
 	}
-	db, err := s.repository.Download(res.ID)
+	db, err := s.driveRepo.Download(res.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -93,4 +126,23 @@ func (s *SyncService) openOrDownload(res domain.ListResult) (domain.Storage, err
 	}
 
 	return s.storageMaker.Make(res.Name)
+}
+
+func validateInput(cmd SyncCMD) error {
+	if cmd.From.IsZero() || cmd.To.IsZero() {
+		return errors.New("from/to dates cannot be empty")
+	}
+	if cmd.Prefix == "" {
+		return errors.New("prefix cannot be empty")
+	}
+
+	if cmd.Spreadsheet == "" {
+		return errors.New("spreadsheet cannot be empty")
+	}
+
+	if cmd.SheetName == "" {
+		return errors.New("sheet name cannot be empty")
+	}
+
+	return nil
 }

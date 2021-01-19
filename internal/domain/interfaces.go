@@ -21,3 +21,8 @@ type StorageMaker interface {
 type Storage interface {
 	AllHabits(from, to time.Time) ([]Stat, error)
 }
+
+type SheetsRepository interface {
+	CreateSheet(id string, name string) error
+	UpdateSheet(id string, name string, stats []Stat) error
+}

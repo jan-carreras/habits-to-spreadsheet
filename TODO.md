@@ -4,10 +4,14 @@
 
 * [x] Be able to pass date ranges or -quarter 2 to filter the DB records by. By default, current quarter
 * [x] Do the query and retrieve all the records
-* [ ] Integrate with sheets
+* [x] Integrate with sheets
     * [x] Authorization
-    * [ ] Be able to fetch/store records on a sheet
+    * [x] Be able to store records on a sheet
 * [x] Fix IDE "Problems" in code
-* [ ] Makefile with build, linter, gofmt checker, test
 * [x] Move the date parsing into an Application Service
-    
+* [ ] Make Makefile
+    * [ ] Build
+    * [ ] Linter & gofmt checker
+* [x] Pass the document ID or name as parameter in CLI
+* [ ] Create unit and integration tests
+* [ ] Make README
