@@ -68,21 +68,29 @@ func importData(arg args) {
 	r, err := drive.NewRepository(arg.credentialsPath, arg.tokenPath)
 	failOnErr(err)
 
-	srv := application.NewSyncService(r,
+	s, err := sheets.NewRepository(arg.credentialsPath, arg.tokenPath)
+	failOnErr(err)
+
+	srv := application.NewSyncService(
+		r,
+		s,
 		drive.NewDBFile(arg.tmpPath),
 		drive.NewStorageFactory(arg.tmpPath),
 		os.Stdout)
 
 	err = srv.Handle(application.SyncCMD{
-		Prefix: arg.prefix,
-		From:   arg.from,
-		To:     arg.to,
+		Prefix:      arg.prefix,
+		From:        arg.from,
+		To:          arg.to,
+		SheetName:   arg.sheetName,
+		Spreadsheet: arg.spreadsheet,
 	})
 	failOnErr(err)
 }
 
 func failOnErr(err error) {
 	if err != nil {
-		log.Fatal(err)
+		var std = log.New(os.Stderr, "", log.LstdFlags)
+		std.Fatal(err)
 	}
 }
