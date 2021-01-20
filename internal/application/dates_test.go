@@ -1,10 +1,11 @@
 package application_test
 
 import (
-	"github.com/stretchr/testify/assert"
 	"habitsSync/internal/application"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type testTimeRepository struct{}
