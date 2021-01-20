@@ -6,6 +6,7 @@ import (
 	"habitsSync/internal/infrastructure/auth"
 	"habitsSync/internal/infrastructure/drive"
 	"habitsSync/internal/infrastructure/sheets"
+	time2 "habitsSync/internal/infrastructure/time"
 	"log"
 	"os"
 	"time"
@@ -27,7 +28,7 @@ type args struct {
 }
 
 func parseDates(a *args) error {
-	s := application.NewDatesService()
+	s := application.NewDatesService(time2.NewRepository())
 	cmd := application.DatesCMD{
 		From:    a.fromStr,
 		To:      a.toStr,

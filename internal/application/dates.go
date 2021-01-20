@@ -6,18 +6,25 @@ import (
 	"time"
 )
 
+type TimeRepository interface {
+	Now() time.Time
+}
+
 const dateLayout = "2006-01-02"
 
 type quarters struct {
-	start time.Time
-	to    time.Time
+	from time.Time
+	to   time.Time
 }
 
 type DatesService struct {
+	timeRepository TimeRepository
 }
 
-func NewDatesService() *DatesService {
-	return &DatesService{}
+func NewDatesService(t TimeRepository) *DatesService {
+	return &DatesService{
+		timeRepository: t,
+	}
 }
 
 type DatesCMD struct {
@@ -35,13 +42,6 @@ func (s *DatesService) Handle(cmd DatesCMD) (DatesOut, error) {
 	return s.parseDates(cmd.From, cmd.To, cmd.Quarter)
 }
 
-/** TODO Things to change about this code
-- Methods are too long — should be defined in smaller functions
-- Time management should be injected for testability purposes
-- Some functions are verbose and repeat themselves (date creation). Could be more simple
-- Adding unit tests, of course
-*/
-
 func (s *DatesService) parseDates(from, to string, quarter int) (dates DatesOut, err error) {
 	if err = noDatesOrBothDatesRequired(from, to); err != nil {
 		return
@@ -51,30 +51,33 @@ func (s *DatesService) parseDates(from, to string, quarter int) (dates DatesOut,
 	if err != nil {
 		return
 	}
+
 	dates.To, err = s.parseDate(to)
 	if err != nil {
 		return
 	}
+	dates.To = endOfDay(dates.To)
 
-	now := time.Now() // TODO: That's untestable. Should come from a repository
-	qs := makeQuarters(now)
+	now := s.timeRepository.Now()
+	qs := makeQuarters(now.Year())
 
 	if quarter != 0 {
 		q := quarter - 1 // 0 index access
-		if q < 0 && q > len(qs) {
+		if q < 0 || q >= len(qs) {
 			err = fmt.Errorf("invalid quarter %v. valid quarters go from 1 to 4", quarter)
 			return
 		}
-		dates.From = qs[q].start
+		dates.From = qs[q].from
 		dates.To = qs[q].to
+		return
 	}
 
 	// No dates defined, set the current quarter
 	if dates.From.IsZero() || dates.To.IsZero() {
 		for _, qt := range qs {
-			if now.Sub(qt.start) >= 0 && now.Sub(qt.to) <= 0 {
-				dates.From, dates.To = qt.start, qt.to
-				break
+			if now.Sub(qt.from) >= 0 && now.Sub(qt.to) <= 0 {
+				dates.From, dates.To = qt.from, qt.to
+				return
 			}
 		}
 	}
@@ -88,24 +91,23 @@ func noDatesOrBothDatesRequired(from, to string) error {
 	return nil
 }
 
-func makeQuarters(now time.Time) []quarters {
-	makeDate := dateMaker(now)
-	return []quarters{
-		{start: makeDate(1, 1, false), to: makeDate(3, 31, true)},
-		{start: makeDate(4, 1, false), to: makeDate(6, 30, true)},
-		{start: makeDate(7, 1, false), to: makeDate(9, 30, true)},
-		{start: makeDate(10, 1, false), to: makeDate(12, 31, true)},
+func makeQuarters(year int) []quarters {
+	mkDate := func(month time.Month, day int) time.Time {
+		return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 	}
-}
 
-func dateMaker(now time.Time) func(month time.Month, day int, end bool) time.Time {
-	return func(month time.Month, day int, end bool) time.Time {
-		hour, min, sec, nano := 0, 0, 0, 0
-		if end {
-			hour, min, sec, nano = 23, 59, 59, 999999999
-		}
-		return time.Date(now.Year(), month, day, hour, min, sec, nano, time.UTC)
+	qs := []quarters{
+		{from: mkDate(1, 1), to: mkDate(3, 31)},
+		{from: mkDate(4, 1), to: mkDate(6, 30)},
+		{from: mkDate(7, 1), to: mkDate(9, 30)},
+		{from: mkDate(10, 1), to: mkDate(12, 31)},
 	}
+
+	for i := range qs {
+		qs[i].to = endOfDay(qs[i].to)
+	}
+
+	return qs
 }
 
 func (s *DatesService) parseDate(d string) (time.Time, error) {
@@ -114,4 +116,9 @@ func (s *DatesService) parseDate(d string) (time.Time, error) {
 	}
 
 	return time.Parse(dateLayout, d)
+}
+
+func endOfDay(t time.Time) time.Time {
+	y, m, d := t.Date()
+	return time.Date(y, m, d, 23, 59, 59, int(time.Second-time.Nanosecond), t.Location())
 }
