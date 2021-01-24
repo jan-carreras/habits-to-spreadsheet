@@ -1,22 +1,19 @@
 package application_test
 
 import (
-	"bytes"
 	"errors"
 	"habitsSync/internal/application"
 	"habitsSync/internal/domain"
 	"io"
+	"io/ioutil"
 	"testing"
-	"time"
 )
 
 func TestSyncService_Handle(t *testing.T) {
 	type fields struct {
-		driveRepo    domain.DriveRepository
-		sheetsRepo   domain.SheetsRepository
-		dbFile       domain.FileRepository
-		storageMaker domain.StorageMaker
-		output       io.Writer
+		habitsGetter       application.HabitsGetter
+		spreadsheetUpdater application.SpreadsheetUpdater
+		output             io.Writer
 	}
 	type args struct {
 		cmd application.SyncCMD
@@ -28,186 +25,60 @@ func TestSyncService_Handle(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:   "Error when date From is not defined",
-			fields: fields{},
-			args: args{
-				cmd: application.SyncCMD{
-					// From is undefined
-					To: time.Now(),
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name:   "Error when date To is not defined",
-			fields: fields{},
-			args: args{
-				cmd: application.SyncCMD{
-					From: time.Now(),
-					// To is undefined
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name:   "Error when Prefix is empty",
-			fields: fields{},
-			args: args{
-				cmd: application.SyncCMD{
-					From:   time.Now(),
-					To:     time.Now(),
-					Prefix: "",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name:   "Error when Spreadsheet is empty",
-			fields: fields{},
-			args: args{
-				cmd: application.SyncCMD{
-					From:        time.Now(),
-					To:          time.Now(),
-					Prefix:      "prefix",
-					Spreadsheet: "",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name:   "Error when SheetName is empty",
-			fields: fields{},
-			args: args{
-				cmd: application.SyncCMD{
-					From:        time.Now(),
-					To:          time.Now(),
-					Prefix:      "prefix",
-					Spreadsheet: "spreadsheet",
-					SheetName:   "",
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "Error when driveRepo errors",
+			name: "fail when getting all the habits fail",
 			fields: fields{
-				driveRepo: fakeDriveRepo{
-					err: errors.New("fake error"),
+				habitsGetter: &fakeHabitsGetter{
+					err: errors.New("fake get all error"),
 				},
+				output: ioutil.Discard,
 			},
-			args:    args{cmd: validCMD()},
+			args:    args{},
 			wantErr: true,
 		},
 		{
-			name: "Error when driveRepo returns no results",
+			name: "fail when updating spreadsheets with habits returns error",
 			fields: fields{
-				driveRepo: fakeDriveRepo{
-					listResult: make([]domain.ListResult, 0),
-				},
-			},
-			args:    args{cmd: validCMD()},
-			wantErr: true,
-		},
-		{
-			name: "Error when driveRepo cannot download file",
-			fields: fields{
-				driveRepo: fakeDriveRepo{
-					listResult: []domain.ListResult{
+				habitsGetter: &fakeHabitsGetter{
+					habits: []domain.Habit{
 						{
-							ID:   "1",
-							Name: "document 1",
+							ID:    1,
+							Name:  "habit 1",
+							Count: 10,
 						},
 					},
-					errDownload: errors.New("fake download error"),
 				},
-				dbFile: fakeDBfile{
-					exists: false,
+				spreadsheetUpdater: &fakeSpreadsheetUpdater{
+					err: errors.New("fake update error"),
 				},
-				output: bytes.NewBuffer(nil),
+				output: ioutil.Discard,
 			},
-			args:    args{cmd: validCMD()},
+			args:    args{},
 			wantErr: true,
 		},
 		{
-			name: "Error when saving database",
+			name: "get all habits and update spreadsheet",
 			fields: fields{
-				driveRepo: fakeDriveRepo{
-					listResult: []domain.ListResult{
+				habitsGetter: &fakeHabitsGetter{
+					habits: []domain.Habit{
 						{
-							ID:   "1",
-							Name: "document 1",
+							ID:    1,
+							Name:  "habit 1",
+							Count: 10,
 						},
 					},
-					payloadDownload: []byte("fake response"),
 				},
-				dbFile: fakeDBfile{
-					exists: false,
-					err:    errors.New("fake error saving to disk"),
-				},
-				output: bytes.NewBuffer(nil),
+				spreadsheetUpdater: &fakeSpreadsheetUpdater{},
+				output:             ioutil.Discard,
 			},
-			args:    args{cmd: validCMD()},
-			wantErr: true,
-		},
-		{
-			name: "Error when storage maker fails",
-			fields: fields{
-				driveRepo: fakeDriveRepo{
-					listResult: []domain.ListResult{
-						{
-							ID:   "1",
-							Name: "document 1",
-						},
-					},
-					payloadDownload: []byte("fake response"),
-				},
-				dbFile: fakeDBfile{
-					exists: false,
-				},
-				output: bytes.NewBuffer(nil),
-				storageMaker: fakeStorageMaker{
-					err: errors.New("fake storage maker error"),
-				},
-			},
-			args:    args{cmd: validCMD()},
-			wantErr: true,
-		},
-		{
-			name: "Error when AllHabits fails",
-			fields: fields{
-				driveRepo: fakeDriveRepo{
-					listResult: []domain.ListResult{
-						{
-							ID:   "1",
-							Name: "document 1",
-						},
-					},
-					payloadDownload: []byte("fake response"),
-				},
-				dbFile: fakeDBfile{
-					exists: false,
-				},
-				output: bytes.NewBuffer(nil),
-				storageMaker: fakeStorageMaker{
-					storage: fakeStorage{
-						err: errors.New("fake AllHabits error"),
-					},
-				},
-			},
-			args:    args{cmd: validCMD()},
-			wantErr: true,
+			args:    args{},
+			wantErr: false,
 		},
 	}
-
-	// Test cases definition end here
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := application.NewSyncService(
-				tt.fields.driveRepo,
-				tt.fields.sheetsRepo,
-				tt.fields.dbFile,
-				tt.fields.storageMaker,
+				tt.fields.habitsGetter,
+				tt.fields.spreadsheetUpdater,
 				tt.fields.output,
 			)
 			if err := s.Handle(tt.args.cmd); (err != nil) != tt.wantErr {
@@ -215,60 +86,4 @@ func TestSyncService_Handle(t *testing.T) {
 			}
 		})
 	}
-}
-
-func validCMD() application.SyncCMD {
-	return application.SyncCMD{
-		From:        time.Now(),
-		To:          time.Now(),
-		Prefix:      "prefix",
-		Spreadsheet: "spreadsheet",
-		SheetName:   "sheet name",
-	}
-}
-
-type fakeDBfile struct {
-	exists bool
-	err    error
-}
-
-func (f fakeDBfile) Exists(name string) bool {
-	return f.exists
-}
-
-func (f fakeDBfile) Store(name string, db []byte) error {
-	return f.err
-}
-
-type fakeDriveRepo struct {
-	listResult      []domain.ListResult
-	err             error
-	errDownload     error
-	payloadDownload []byte
-}
-
-func (f fakeDriveRepo) ListByPrefix(contains string) ([]domain.ListResult, error) {
-	return f.listResult, f.err
-}
-
-func (f fakeDriveRepo) Download(id string) ([]byte, error) {
-	return f.payloadDownload, f.errDownload
-}
-
-type fakeStorageMaker struct {
-	storage domain.Storage
-	err     error
-}
-
-func (f fakeStorageMaker) Make(name string) (domain.Storage, error) {
-	return f.storage, f.err
-}
-
-type fakeStorage struct {
-	stats []domain.Stat
-	err   error
-}
-
-func (f fakeStorage) AllHabits(from, to time.Time) ([]domain.Stat, error) {
-	return f.stats, f.err
 }

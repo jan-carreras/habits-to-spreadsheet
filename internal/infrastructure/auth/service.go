@@ -11,6 +11,7 @@ type authRepo interface {
 	SaveAuthToken(string) error
 }
 
+// TODO: Move this service to the Service package
 type Service struct {
 	rw       io.ReadWriter
 	authRepo authRepo

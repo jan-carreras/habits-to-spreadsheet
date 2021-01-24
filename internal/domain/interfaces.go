@@ -5,7 +5,7 @@ import (
 )
 
 type DriveRepository interface {
-	ListByPrefix(contains string) ([]ListResult, error)
+	ListByPrefix(contains string) ([]File, error)
 	Download(id string) ([]byte, error)
 }
 
@@ -19,10 +19,10 @@ type StorageMaker interface {
 }
 
 type Storage interface {
-	AllHabits(from, to time.Time) ([]Stat, error)
+	AllHabits(from, to time.Time) ([]Habit, error)
 }
 
 type SheetsRepository interface {
 	CreateSheet(id string, name string) error
-	UpdateSheet(id string, name string, stats []Stat) error
+	UpdateSheet(id string, name string, stats []Habit) error
 }

@@ -87,7 +87,7 @@ func (r *repository) CreateSheet(id string, name string) error {
 	return createSheet(name)
 }
 
-func (r *repository) UpdateSheet(id string, name string, stats []domain.Stat) error {
+func (r *repository) UpdateSheet(id string, name string, stats []domain.Habit) error {
 	rows := make([][]interface{}, 0)
 	rows = append(rows, []interface{}{"ID", "Name", "Count"})
 	for _, st := range stats {

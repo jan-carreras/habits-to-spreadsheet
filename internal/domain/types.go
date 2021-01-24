@@ -1,12 +1,12 @@
 package domain
 
-type Stat struct {
+type Habit struct {
 	ID    int
 	Name  string
 	Count int
 }
 
-type ListResult struct {
+type File struct {
 	ID   string
 	Name string
 }

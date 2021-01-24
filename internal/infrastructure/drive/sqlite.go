@@ -45,16 +45,16 @@ func NewStorage(path string) (*Storage, error) {
 	}, nil
 }
 
-func (d *Storage) AllHabits(from, to time.Time) ([]domain.Stat, error) {
+func (d *Storage) AllHabits(from, to time.Time) ([]domain.Habit, error) {
 	result, err := d.db.Query(allHabitsQuery, from.Unix()*1000, to.Unix()*1000)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = result.Close() }()
 
-	stats := make([]domain.Stat, 0)
+	stats := make([]domain.Habit, 0)
 	for result.Next() {
-		s := domain.Stat{}
+		s := domain.Habit{}
 		if err = result.Scan(&s.ID, &s.Name, &s.Count); err != nil {
 			return nil, err
 		}

@@ -2,8 +2,12 @@
 SRC = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 
 .PHONY: build
-build: ## Build app
+build: test ## Build app
 	go build -o bin/hsync cmd/import/*.go
+
+.PHONY: test
+test: ## Run the tests with coverage
+	@go test -cover ./...
 
 .PHONY: run
 run: ## Execute the cli APP
@@ -15,7 +19,7 @@ fmt: ## Reformat code and imports
 	@goimports -w $(SRC)
 
 .PHONY: check
-check: ## Run linters & gofmt check
+check: test ## Run linters & gofmt check
 	@test -z $(shell gofmt -l $(SRC) | tee /dev/stderr) || (echo "[ERR] Fix formatting issues with 'make fmt'" && false)
 	@which golangci-lint > /dev/null 2>/dev/null || (echo "ERROR: golangci-lint not found" && false)
 	@golangci-lint run

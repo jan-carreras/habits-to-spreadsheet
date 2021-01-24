@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"habitsSync/internal/application"
+	"habitsSync/internal/domain"
 	"habitsSync/internal/infrastructure/auth"
 	"habitsSync/internal/infrastructure/drive"
 	"habitsSync/internal/infrastructure/sheets"
@@ -78,10 +79,12 @@ func importData(arg args) {
 	failOnErr(err)
 
 	srv := application.NewSyncService(
-		r,
-		s,
-		drive.NewDBFile(arg.tmpPath),
-		drive.NewStorageFactory(arg.tmpPath),
+		domain.NewHabits(
+			drive.NewDBFile(arg.tmpPath),
+			drive.NewStorageFactory(arg.tmpPath),
+			r,
+		),
+		domain.NewSpreadsheet(r, s),
 		os.Stdout)
 
 	err = srv.Handle(application.SyncCMD{

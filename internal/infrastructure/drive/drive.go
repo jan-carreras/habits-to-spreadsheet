@@ -50,7 +50,7 @@ func getConfig(credentialsPath string) (*oauth2.Config, error) {
 	return google.ConfigFromJSON(b, drive.DriveMetadataReadonlyScope, drive.DriveReadonlyScope)
 }
 
-func (r *repository) ListByPrefix(contains string) ([]domain.ListResult, error) {
+func (r *repository) ListByPrefix(contains string) ([]domain.File, error) {
 	if strings.Contains(contains, "'") {
 		return nil, errors.New("prefix contains unsupported single quote character")
 	}
@@ -65,9 +65,9 @@ func (r *repository) ListByPrefix(contains string) ([]domain.ListResult, error) 
 		return nil, fmt.Errorf("unable to retrieve files: %v", err)
 	}
 
-	lr := make([]domain.ListResult, 0)
+	lr := make([]domain.File, 0)
 	for _, r := range rsp.Files {
-		lr = append(lr, domain.ListResult{
+		lr = append(lr, domain.File{
 			ID:   r.Id,
 			Name: r.Name,
 		})
