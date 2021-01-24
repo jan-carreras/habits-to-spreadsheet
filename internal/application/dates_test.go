@@ -4,8 +4,6 @@ import (
 	"habitsSync/internal/application"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 type testTimeRepository struct{}
@@ -124,7 +122,9 @@ func TestDatesService_Handle(t *testing.T) {
 			got, err := s.Handle(tt.args.cmd)
 
 			if tt.wantErr {
-				assert.NotNil(t, t, err)
+				if err == nil {
+					t.Error("Got no error but wanted one")
+				}
 				return
 			}
 
