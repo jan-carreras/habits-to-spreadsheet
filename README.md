@@ -21,6 +21,8 @@ Interesting stuff:
 * [TODO.md](https://github.com/jan-carreras/habits-to-spreadsheet/blob/master/TODO.md) driven development
 * Proper [MIT license](https://github.com/jan-carreras/habits-to-spreadsheet/blob/master/LICENSE)
 
+[More](https://jcarreras.es/) about me and [some of my interests](https://bitbucket.org/jcarreras/books/src/master/)
+
 ## Build
 
 ```bash
