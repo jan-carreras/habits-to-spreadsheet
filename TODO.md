@@ -13,5 +13,7 @@
     * [x] Build
     * [x] Linter & gofmt checker
 * [x] Pass the document ID or name as parameter in CLI
-* [ ] Create unit and integration tests
-* [ ] Make README
+* [ ] Create tests
+    * [x] Unit tests
+    * [ ] Integration tests
+* [x] Make README
